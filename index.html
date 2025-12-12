@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ผลไม้ By เจ๊เนาว์ - ระบบจัดการหน้าร้าน</title>
+    <title>ผลไม้ By เจ๊เนาว์ - ระบบจัดการหน้าร้าน (Offline Mode)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
@@ -19,77 +19,35 @@
         ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 10px; }
         
         .custom-input:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); transition: all 0.2s; }
+        
+        .payment-option { border: 2px solid #e5e7eb; transition: all 0.2s; background: white; }
+        .payment-option:hover { border-color: #a7f3d0; transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
         .payment-option.active { background-color: #ecfdf5; border-color: #059669; color: #047857; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2); }
+        
         input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-        /* --- A5 Receipt Layout (Refined) --- */
-        #receipt-render-area {
-            width: 148mm;
-            min-height: 210mm;
-            background: white;
-            padding: 6mm 8mm; /* ลดขอบลง */
-            box-sizing: border-box;
-            font-size: 9pt; /* ฟอนต์ขนาดพอดี */
-            line-height: 1.3;
-            color: #1f2937;
-            position: relative;
-            font-family: 'Prompt', sans-serif;
-        }
-
-        /* Header Split Layout */
-        .rec-header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 5px;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #059669; 
-        }
-
-        /* Header Left */
+        /* A5 Receipt Layout */
+        #receipt-render-area { width: 148mm; min-height: 210mm; background: white; padding: 6mm 8mm; box-sizing: border-box; font-size: 9pt; line-height: 1.3; color: #1f2937; position: relative; font-family: 'Prompt', sans-serif; }
+        .rec-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 2px solid #059669; }
         .rec-header-left { text-align: left; width: 50%; }
         .rec-title-th { font-size: 16pt; font-weight: bold; color: #059669; line-height: 1; }
         .rec-title-en { font-size: 10pt; font-weight: bold; color: #059669; margin-top: -2px; }
         .rec-meta { font-size: 8.5pt; color: #555; margin-top: 5px; line-height: 1.4; }
-
-        /* Header Right */
         .rec-header-right { text-align: right; width: 50%; }
         .rec-shop-name { font-size: 14pt; font-weight: bold; color: #1f2937; margin-bottom: 2px; }
         .rec-shop-info { font-size: 8.5pt; color: #4b5563; line-height: 1.4; }
-
-        /* Customer Row */
         .rec-customer-row { margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px dashed #e5e7eb; font-size: 9pt; display: flex; justify-content: space-between; font-weight: 500; }
-
-        /* Items Table */
         .rec-items-table { width: 100%; font-size: 9pt; border-collapse: collapse; margin-bottom: 8px; }
         .rec-items-table th { border-bottom: 1px solid #374151; text-align: left; padding: 3px 2px; font-weight: 600; color: #374151; }
         .rec-items-table td { padding: 3px 2px; border-bottom: 1px dotted #e5e7eb; vertical-align: top; }
-
-        /* Total Section (Right Aligned) */
         .rec-total-box { display: flex; justify-content: flex-end; margin-bottom: 10px; }
-        .rec-total-table { width: 55%; font-size: 9pt; }
+        .rec-total-table { width: 60%; font-size: 9pt; }
         .rec-total-table td { text-align: right; padding: 1px 0; }
-        .rec-net-price { font-size: 12pt; font-weight: bold; color: #059669; border-top: 1px solid #374151; border-bottom: 2px double #374151; padding: 3px 0; margin-top: 2px; }
-
-        /* Debt Section (MOVED TO LEFT) */
-        .rec-debt-box { 
-            text-align: left; /* ชิดซ้าย */
-            margin-top: 5px; 
-            padding: 6px 0; 
-            border-top: 1px dashed #ccc;
-            border-bottom: 1px dashed #ccc;
-            font-size: 9pt;
-            width: 100%; /* เต็มความกว้าง แต่ข้อความจะอยู่ซ้าย */
-        }
-        .rec-debt-row { 
-            display: flex; 
-            justify-content: flex-start; /* จัดเรียงไปทางซ้าย */
-            gap: 15px; /* ระยะห่างระหว่างตัวหนังสือกับตัวเลข */
-            margin-bottom: 2px;
-        }
-        .rec-debt-label { width: 130px; color: #555; } /* ความกว้างคงที่เพื่อให้ตัวเลขตรงกัน */
+        .rec-net-price { font-size: 14pt; font-weight: bold; color: #059669; border-top: 1px solid #374151; border-bottom: 2px solid #374151; padding: 4px 0; margin-top: 4px; }
+        .rec-debt-box { text-align: left; margin-top: 5px; padding: 6px 0; border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; font-size: 9pt; width: 100%; }
+        .rec-debt-row { display: flex; justify-content: flex-start; gap: 15px; margin-bottom: 2px; }
+        .rec-debt-label { width: 130px; color: #555; }
         .rec-debt-val { font-weight: 600; }
-        
         .rec-footer-msg { margin-top: 20px; text-align: center; font-size: 8pt; color: #9ca3af; }
     </style>
 </head>
@@ -104,14 +62,20 @@
                     <p class="text-xs text-emerald-100 font-light">ระบบจัดการหน้าร้าน</p>
                 </div>
             </div>
-            <div class="text-sm bg-emerald-800/40 backdrop-blur-sm px-4 py-1.5 rounded-full border border-emerald-400/30 flex items-center gap-2 shadow-inner">
-                <i class="fa-regular fa-clock text-emerald-200"></i> <span id="current-datetime"></span>
+            <div class="flex items-center gap-3">
+                <div id="offline-indicator" class="hidden flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-full shadow cursor-pointer transition" onclick="queueManager.sync()">
+                    <i class="fa-solid fa-cloud-arrow-up animate-bounce"></i>
+                    <span class="text-xs font-bold">รอส่ง <span id="offline-count">0</span> รายการ</span>
+                </div>
+                
+                <div class="text-sm bg-emerald-800/40 backdrop-blur-sm px-4 py-1.5 rounded-full border border-emerald-400/30 flex items-center gap-2 shadow-inner">
+                    <i class="fa-regular fa-clock text-emerald-200"></i> <span id="current-datetime"></span>
+                </div>
             </div>
         </div>
     </nav>
 
     <div class="container mx-auto p-4 md:p-6 mt-16 mb-10 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         <div class="lg:col-span-2 space-y-5">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                 <div class="grid grid-cols-2 gap-5 mb-4">
@@ -177,123 +141,61 @@
 
             <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-4 opacity-5"><i class="fa-solid fa-cash-register text-8xl"></i></div>
-                
                 <div class="space-y-2 mb-6 text-sm relative z-10">
                     <div class="flex justify-between text-slate-500"><span>รวมเงินสินค้า:</span><span class="font-medium text-lg text-slate-700" id="sum-subtotal">0.00</span></div>
                     <div class="flex justify-between text-blue-500"><span>ค่ามัดจำรวม:</span><span class="font-medium text-lg" id="sum-deposit">0.00</span></div>
                     <div class="flex justify-between items-center text-red-500">
                         <span>ส่วนลด:</span>
-                        <div class="flex items-center gap-1">
-                            <span>-</span>
-                            <input type="number" id="inp-discount" class="w-20 text-right border-b border-red-200 text-red-500 outline-none bg-transparent font-medium" placeholder="0">
-                        </div>
+                        <div class="flex items-center gap-1"><span>-</span><input type="number" id="inp-discount" class="w-20 text-right border-b border-red-200 text-red-500 outline-none bg-transparent font-medium" placeholder="0"></div>
                     </div>
                     <div class="pt-4 border-t border-dashed border-slate-200 flex justify-between items-end mt-2">
                         <span class="font-bold text-slate-800 text-lg">ยอดสุทธิ</span>
                         <span class="text-4xl font-bold text-emerald-600 tracking-tight" id="sum-total">0.00</span>
                     </div>
                 </div>
-
                 <p class="text-xs font-bold text-slate-400 uppercase mb-3 relative z-10">ชำระโดย</p>
                 <div class="grid grid-cols-2 gap-3 mb-6 relative z-10">
-                    <div class="payment-option active p-3 rounded-xl border-2 cursor-pointer select-none flex flex-col items-center justify-center gap-1" onclick="app.setPayment('เงินสด', this)">
-                        <i class="fa-solid fa-money-bill-wave text-emerald-500 text-xl"></i>
-                        <span class="text-xs font-bold">เงินสด</span>
-                    </div>
-                    <div class="payment-option p-3 rounded-xl border-2 cursor-pointer select-none flex flex-col items-center justify-center gap-1" onclick="app.setPayment('โอน (QR Code)', this)">
-                        <i class="fa-solid fa-qrcode text-blue-500 text-xl"></i>
-                        <span class="text-xs font-bold">โอนเงิน</span>
-                    </div>
-                    <div class="payment-option p-3 rounded-xl border-2 cursor-pointer select-none flex flex-col items-center justify-center gap-1" onclick="app.setPayment('รอชำระ', this)">
-                        <i class="fa-solid fa-clock-rotate-left text-amber-500 text-xl"></i>
-                        <span class="text-xs font-bold">รอชำระ</span>
-                    </div>
-                    <div class="payment-option p-3 rounded-xl border-2 cursor-pointer select-none flex flex-col items-center justify-center gap-1" onclick="app.setPayment('อื่นๆ', this)">
-                        <i class="fa-solid fa-ellipsis text-gray-400 text-xl"></i>
-                        <span class="text-xs font-bold">อื่นๆ</span>
-                    </div>
+                    <div class="payment-option active p-3 rounded-xl cursor-pointer select-none flex flex-col items-center justify-center gap-1" onclick="app.setPayment('เงินสด', this)"><i class="fa-solid fa-money-bill-wave text-emerald-500 text-xl"></i><span class="text-xs font-bold">เงินสด</span></div>
+                    <div class="payment-option p-3 rounded-xl cursor-pointer select-none flex flex-col items-center justify-center gap-1" onclick="app.setPayment('โอน (QR Code)', this)"><i class="fa-solid fa-qrcode text-blue-500 text-xl"></i><span class="text-xs font-bold">โอนเงิน</span></div>
+                    <div class="payment-option p-3 rounded-xl cursor-pointer select-none flex flex-col items-center justify-center gap-1" onclick="app.setPayment('รอชำระ', this)"><i class="fa-solid fa-clock-rotate-left text-amber-500 text-xl"></i><span class="text-xs font-bold">รอชำระ</span></div>
+                    <div class="payment-option p-3 rounded-xl cursor-pointer select-none flex flex-col items-center justify-center gap-1" onclick="app.setPayment('อื่นๆ', this)"><i class="fa-solid fa-ellipsis text-gray-400 text-xl"></i><span class="text-xs font-bold">อื่นๆ</span></div>
                 </div>
-
-                <button onclick="app.processCheckout()" class="w-full py-4 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-slate-800 shadow-xl flex justify-center items-center gap-3 transition transform active:scale-[0.98] relative z-10">
-                    <i class="fa-solid fa-print"></i> บันทึก & พิมพ์ A5
-                </button>
+                <button onclick="app.processCheckout()" class="w-full py-4 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-slate-800 shadow-xl flex justify-center items-center gap-3 transition transform active:scale-[0.98] relative z-10"><i class="fa-solid fa-print"></i> บันทึก & พิมพ์ A5</button>
             </div>
         </div>
     </div>
 
     <div style="position:fixed; left:-9999px; top:0;">
         <div id="receipt-render-area">
-            
             <div class="rec-header-row">
                 <div class="rec-header-left">
                     <div class="rec-title-th">ใบเสร็จรับเงิน</div>
                     <div class="rec-title-en">RECEIPT</div>
-                    <div class="rec-meta">
-                        <b>เลขที่:</b> <span id="r-inv"></span><br>
-                        <b>วันที่:</b> <span id="r-date"></span> <span id="r-time"></span>
-                    </div>
+                    <div class="rec-meta"><b>เลขที่:</b> <span id="r-inv"></span><br><b>วันที่:</b> <span id="r-date"></span> <span id="r-time"></span></div>
                 </div>
                 <div class="rec-header-right">
                     <div class="rec-shop-name">ผลไม้ By เจ๊เนาว์</div>
-                    <div class="rec-shop-info">
-                        ตลาดเมืองใหม่ จ.เชียงใหม่<br>
-                        โทร. 081-114-7477
-                    </div>
+                    <div class="rec-shop-info">ตลาดเมืองใหม่ จ.เชียงใหม่<br>โทร. 081-114-7477</div>
                 </div>
             </div>
-
-            <div class="rec-customer-row">
-                <div><b>ลูกค้า:</b> <span id="r-name"></span></div>
-                <div><b>ชำระโดย:</b> <span id="r-pay"></span></div>
-            </div>
-
+            <div class="rec-customer-row"><div><b>ลูกค้า:</b> <span id="r-name"></span></div><div><b>ชำระโดย:</b> <span id="r-pay"></span></div></div>
             <table class="rec-items-table">
-                <thead>
-                    <tr>
-                        <th style="width: 55%;">รายการ</th>
-                        <th style="width: 15%; text-align: right;">ราคา</th>
-                        <th style="width: 10%; text-align: center;">จำนวน</th>
-                        <th style="width: 20%; text-align: right;">รวมเงิน</th>
-                    </tr>
-                </thead>
+                <thead><tr><th style="width: 55%;">รายการ</th><th style="width: 15%; text-align: right;">ราคา</th><th style="width: 15%; text-align: center;">จำนวน</th><th style="width: 15%; text-align: right;">รวม</th></tr></thead>
                 <tbody id="r-body"></tbody>
             </table>
-
             <div class="rec-total-box">
                 <table class="rec-total-table">
-                    <tr>
-                        <td>รวมเงินสินค้า:</td>
-                        <td width="35%" id="r-sub"></td>
-                    </tr>
-                    <tr>
-                        <td style="color: #2563eb;">บวก ค่ามัดจำ:</td>
-                        <td style="color: #2563eb;" id="r-dep"></td>
-                    </tr>
-                    <tr>
-                        <td style="color: #dc2626;">หัก ส่วนลด:</td>
-                        <td style="color: #dc2626;" id="r-disc"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="2"><div class="rec-net-price"><span id="r-total"></span></div></td>
-                    </tr>
+                    <tr><td>รวมเงินสินค้า:</td><td width="35%" id="r-sub"></td></tr>
+                    <tr><td style="color: blue;">บวก ค่ามัดจำ:</td><td style="color: blue;" id="r-dep"></td></tr>
+                    <tr><td style="color: red;">หัก ส่วนลด:</td><td style="color: red;" id="r-disc"></td></tr>
+                    <tr><td colspan="2"><div class="rec-net-price"><span id="r-total"></span></div></td></tr>
                 </table>
             </div>
-
             <div id="r-debt-section" class="rec-debt-box hidden">
-                <div class="rec-debt-row">
-                    <span class="rec-debt-label">ยอดหนี้เก่ายกมา:</span>
-                    <span class="rec-debt-val" id="r-debt-old"></span>
-                </div>
-                <div class="rec-debt-row" style="color: #dc2626;">
-                    <span class="rec-debt-label">ยอดหนี้คงเหลือสุทธิ:</span>
-                    <span class="rec-debt-val" id="r-debt-new"></span>
-                </div>
+                <div class="rec-debt-row"><span class="rec-debt-label">ยอดหนี้เก่ายกมา:</span><span class="rec-debt-val" id="r-debt-old"></span></div>
+                <div class="rec-debt-row" style="color: #dc2626;"><span class="rec-debt-label">ยอดหนี้คงเหลือสุทธิ:</span><span class="rec-debt-val" id="r-debt-new"></span></div>
             </div>
-
-            <div class="rec-footer-msg">
-                ขอบคุณที่อุดหนุนครับ / Thank you<br>
-                สินค้าซื้อแล้วไม่รับเปลี่ยนคืน
-            </div>
+            <div class="rec-footer-msg">ขอบคุณที่อุดหนุนครับ / Thank you<br>สินค้าซื้อแล้วไม่รับเปลี่ยนคืน</div>
         </div>
     </div>
 
@@ -309,10 +211,7 @@
                     <p class="text-xs text-red-500 uppercase tracking-wide">ยอดหนี้ปัจจุบัน</p>
                     <p class="text-3xl font-bold text-red-600 mt-1" id="modal-debt-val">0.00</p>
                 </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-500 mb-1 block">ยอดชำระเข้ามา</label>
-                    <input id="debt-pay-amt" type="number" class="custom-input w-full p-3 border rounded-xl text-right text-xl font-bold text-emerald-600" placeholder="0.00">
-                </div>
+                <input id="debt-pay-amt" type="number" class="custom-input w-full p-3 border rounded-xl text-right text-xl font-bold text-emerald-600" placeholder="0.00">
                 <div class="flex gap-3 pt-3">
                     <button onclick="ui.closeModal('debt-modal')" class="flex-1 py-3 bg-slate-100 rounded-xl text-slate-600 font-medium">ยกเลิก</button>
                     <button onclick="app.submitDebtPayment()" class="flex-1 py-3 bg-amber-500 text-white rounded-xl font-bold shadow-lg hover:bg-amber-600">บันทึก</button>
@@ -325,24 +224,19 @@
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <h3 class="font-bold text-lg text-blue-600 mb-4 border-b pb-2 flex items-center gap-2"><i class="fa-solid fa-box"></i> จัดการสินค้า</h3>
             <div class="flex gap-2 mb-4">
-                <input id="new-prod-name" class="custom-input flex-1 p-2 border rounded-lg text-sm" placeholder="ชื่อสินค้า (เช่น ทุเรียน)">
+                <input id="new-prod-name" class="custom-input flex-1 p-2 border rounded-lg text-sm" placeholder="ชื่อสินค้า">
                 <input id="new-prod-price" type="number" class="custom-input w-24 p-2 border rounded-lg text-sm" placeholder="ราคา">
                 <button onclick="app.addProduct()" class="bg-blue-600 text-white px-4 rounded-lg hover:bg-blue-700 shadow"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div class="max-h-64 overflow-y-auto border rounded-lg">
-                <table class="w-full text-sm">
-                    <thead class="bg-slate-50 sticky top-0 text-slate-500">
-                        <tr><th class="p-3 text-left">ชื่อ</th><th class="p-3 text-right">ราคา</th><th class="p-3 text-center">ลบ</th></tr>
-                    </thead>
-                    <tbody id="prod-list" class="divide-y text-slate-700"></tbody>
-                </table>
+                <table class="w-full text-sm"><tbody id="prod-list" class="divide-y text-slate-700"></tbody></table>
             </div>
             <button onclick="ui.closeModal('product-modal')" class="mt-5 w-full py-2 bg-slate-100 rounded-lg text-slate-600 text-sm font-medium">ปิดหน้าต่าง</button>
         </div>
     </div>
 
     <div id="report-modal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col shadow-2xl">
             <div class="p-5 border-b flex justify-between items-center bg-slate-50 rounded-t-2xl">
                 <h3 class="font-bold text-xl text-purple-700 flex items-center gap-2"><i class="fa-solid fa-chart-pie"></i> รายงานยอดขาย</h3>
                 <button onclick="ui.closeModal('report-modal')" class="text-slate-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-times"></i></button>
@@ -351,13 +245,11 @@
                 <div class="mb-4 flex gap-2">
                     <input type="text" id="rpt-search" placeholder="ค้นหาลูกค้า, เลขบิล..." class="p-2 border rounded-lg w-full md:w-1/3 shadow-sm" onkeyup="app.renderReportTable()">
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm"><p class="text-xs text-emerald-500 font-bold uppercase">ขายวันนี้ (รับเงิน)</p><p class="text-2xl font-bold text-emerald-700" id="rpt-today">0</p></div>
+                    <div class="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm"><p class="text-xs text-emerald-500 font-bold uppercase">ขายวันนี้</p><p class="text-2xl font-bold text-emerald-700" id="rpt-today">0</p></div>
                     <div class="bg-white p-4 rounded-xl border border-amber-100 shadow-sm"><p class="text-xs text-amber-500 font-bold uppercase">รอชำระสุทธิ</p><p class="text-2xl font-bold text-amber-600" id="rpt-pending">0</p></div>
-                    <div class="bg-white p-4 rounded-xl border border-blue-100 shadow-sm"><p class="text-xs text-blue-500 font-bold uppercase">รายการทั้งหมด</p><p class="text-2xl font-bold text-blue-600" id="rpt-count">0</p></div>
+                    <div class="bg-white p-4 rounded-xl border border-blue-100 shadow-sm"><p class="text-xs text-blue-500 font-bold uppercase">ทั้งหมด</p><p class="text-2xl font-bold text-blue-600" id="rpt-count">0</p></div>
                 </div>
-
                 <div id="rpt-container" class="space-y-6"></div>
             </div>
         </div>
@@ -384,21 +276,86 @@
         // *** ใส่ URL ของคุณที่นี่ ***
         const API_URL = 'https://script.google.com/macros/s/AKfycbx3-32lGgn9fpSpQS1XD-7ERqiC8vgucrWM21uu8ZsZp8w00WtJLGkg2MNAWJOj0KWXhA/exec'; 
 
+        // --- OFFLINE MANAGER (Queue System) ---
+        const queueManager = {
+            key: 'pos_offline_queue',
+            getQueue() { return JSON.parse(localStorage.getItem(this.key)) || []; },
+            addToQueue(data) {
+                const q = this.getQueue();
+                q.push(data);
+                localStorage.setItem(this.key, JSON.stringify(q));
+                this.updateIndicator();
+            },
+            async sync() {
+                const q = this.getQueue();
+                if (q.length === 0) return;
+                
+                document.getElementById('loader').classList.remove('hidden');
+                document.getElementById('loader').querySelector('p').innerText = "กำลังซิงค์ข้อมูล...";
+                
+                let successCount = 0;
+                const newQ = [];
+
+                for (const item of q) {
+                    try {
+                        const res = await fetch(API_URL, {
+                            method: 'POST',
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            body: JSON.stringify(item)
+                        });
+                        const json = await res.json();
+                        if (json.status === 'success') successCount++;
+                        else newQ.push(item); // Keep failed item
+                    } catch (e) {
+                        newQ.push(item); // Keep failed item
+                    }
+                }
+
+                localStorage.setItem(this.key, JSON.stringify(newQ));
+                this.updateIndicator();
+                document.getElementById('loader').classList.add('hidden');
+                
+                if (successCount > 0) Swal.fire({icon: 'success', title: `ซิงค์สำเร็จ ${successCount} รายการ`});
+                else Swal.fire({icon: 'error', title: 'ซิงค์ไม่สำเร็จ', text: 'กรุณาตรวจสอบอินเทอร์เน็ต'});
+            },
+            updateIndicator() {
+                const count = this.getQueue().length;
+                const el = document.getElementById('offline-indicator');
+                const countEl = document.getElementById('offline-count');
+                if (count > 0) {
+                    el.classList.remove('hidden');
+                    countEl.innerText = count;
+                } else {
+                    el.classList.add('hidden');
+                }
+            }
+        };
+
         const api = {
             async post(payload) {
                 document.getElementById('loader').classList.remove('hidden');
+                document.getElementById('loader').querySelector('p').innerText = "กำลังดำเนินการ...";
+                
                 try {
                     const res = await fetch(API_URL, {
                         method: 'POST',
                         headers: { "Content-Type": "text/plain;charset=utf-8" },
                         body: JSON.stringify(payload)
                     });
-                    return await res.json();
-                } catch (e) {
-                    Swal.fire({icon: 'error', title: 'การเชื่อมต่อขัดข้อง', text: 'กรุณาตรวจสอบอินเทอร์เน็ตหรือ URL'});
-                    throw e;
-                } finally {
+                    const data = await res.json();
                     document.getElementById('loader').classList.add('hidden');
+                    return data;
+                } catch (e) {
+                    document.getElementById('loader').classList.add('hidden');
+                    console.warn("Offline Mode Triggered", e);
+                    
+                    // Only save 'save_transaction' to queue
+                    if (payload.action === 'save_transaction') {
+                        queueManager.addToQueue(payload);
+                        return { status: 'success', offline: true }; // Fake success
+                    } else {
+                        throw e; // Check Debt / Report needs online
+                    }
                 }
             }
         };
@@ -417,6 +374,7 @@
                 this.updateTime();
                 setInterval(() => this.updateTime(), 60000);
                 document.getElementById('inp-discount').addEventListener('input', () => this.renderCart());
+                queueManager.updateIndicator();
             },
             resetForm() {
                 this.data.cart = [];
@@ -441,7 +399,6 @@
                 this.data.invNo = `INV-${d}-${r}`;
                 document.getElementById('inv-no').value = this.data.invNo;
             },
-            // Product
             renderProdList() {
                 document.getElementById('prod-list').innerHTML = this.data.products.map(p => 
                     `<tr><td class="p-3 font-medium">${p.name}</td><td class="text-right p-3 text-slate-500">${p.price||'-'}</td>
@@ -464,7 +421,6 @@
                 localStorage.setItem('pos_products', JSON.stringify(this.data.products));
                 this.renderProdList(); this.renderCart();
             },
-            // Cart
             addRow() {
                 this.data.cart.push({id:Date.now(), prodId:'', price:0, qty:'', deposit:0});
                 this.renderCart();
@@ -522,21 +478,24 @@
                 document.querySelectorAll('.payment-option').forEach(x=>x.classList.remove('active'));
                 if(el) el.classList.add('active');
             },
-            // API Actions
             async checkDebt() {
                 const name = document.getElementById('cust-name').value.trim();
                 if(!name) return Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อลูกค้า', 'warning');
-                const res = await api.post({ action: 'get_debt', name: name });
-                if(res.status==='success') Swal.fire(`หนี้คงค้าง: ${res.debt.toLocaleString()} บาท`, name, 'info');
+                try {
+                    const res = await api.post({ action: 'get_debt', name: name });
+                    if(res.status==='success') Swal.fire(`หนี้คงค้าง: ${res.debt.toLocaleString()} บาท`, name, 'info');
+                } catch(e) { Swal.fire('Offline', 'ไม่สามารถเช็คหนี้ได้ขณะออฟไลน์', 'warning'); }
             },
             async checkDebtInModal() {
                 const name = document.getElementById('debt-pay-name').value.trim();
                 if(!name) return;
-                const res = await api.post({ action: 'get_debt', name: name });
-                if(res.status==='success') {
-                    document.getElementById('modal-debt-val').innerText = res.debt.toLocaleString();
-                    document.getElementById('debt-display-area').classList.remove('hidden');
-                }
+                try {
+                    const res = await api.post({ action: 'get_debt', name: name });
+                    if(res.status==='success') {
+                        document.getElementById('modal-debt-val').innerText = res.debt.toLocaleString();
+                        document.getElementById('debt-display-area').classList.remove('hidden');
+                    }
+                } catch(e) {}
             },
             async submitDebtPayment() {
                 const name = document.getElementById('debt-pay-name').value.trim();
@@ -557,16 +516,19 @@
                 
                 if(res.status==='success') {
                     ui.closeModal('debt-modal');
-                    Swal.fire({icon:'success', title:'บันทึกเรียบร้อย', showConfirmButton:false, timer:1500});
+                    const msg = res.offline ? 'บันทึกออฟไลน์แล้ว' : 'บันทึกสำเร็จ';
+                    Swal.fire({icon:'success', title: msg, showConfirmButton:false, timer:1500});
                     this.resetForm(); 
                 }
             },
             async loadReport() {
-                const res = await api.post({ action: 'get_report' });
-                if(res.status==='success') {
-                    this.data.reportData = res.data;
-                    this.renderReportTable();
-                }
+                try {
+                    const res = await api.post({ action: 'get_report' });
+                    if(res.status==='success') {
+                        this.data.reportData = res.data;
+                        this.renderReportTable();
+                    }
+                } catch(e) { Swal.fire('Offline', 'ไม่สามารถดูรายงานได้ขณะออฟไลน์', 'warning'); }
             },
             renderReportTable() {
                 const search = document.getElementById('rpt-search').value.toLowerCase();
@@ -600,17 +562,14 @@
                 Object.values(grouped).forEach(group => {
                     const card = document.createElement('div');
                     card.className = "bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden";
-                    
                     let rows = group.items.map(d => {
                         const isDebtPay = d.note === 'ชำระหนี้ค้าง';
                         let actions = '';
                         if (isDebtPay) {
-                            actions = `
-                                <div class="flex gap-2 justify-center">
-                                    <button onclick="app.prepEdit('${d.invoiceId}', ${d.totalAmount})" class="text-blue-500 hover:text-blue-700 text-xs border px-2 py-1 rounded-md bg-white">แก้ไข</button>
-                                    <button onclick="app.deleteTx('${d.invoiceId}')" class="text-red-500 hover:text-red-700 text-xs border px-2 py-1 rounded-md bg-white">ลบ</button>
-                                </div>
-                            `;
+                            actions = `<div class="flex gap-2 justify-center">
+                                <button onclick="app.prepEdit('${d.invoiceId}', ${d.totalAmount})" class="text-blue-500 hover:text-blue-700 text-xs border px-2 py-1 rounded-md bg-white">แก้ไข</button>
+                                <button onclick="app.deleteTx('${d.invoiceId}')" class="text-red-500 hover:text-red-700 text-xs border px-2 py-1 rounded-md bg-white">ลบ</button>
+                            </div>`;
                         }
                         
                         let badgeClass = 'bg-gray-100 text-gray-600';
@@ -628,13 +587,7 @@
                         </tr>`;
                     }).join('');
 
-                    card.innerHTML = `
-                        <div class="bg-slate-50 px-4 py-3 border-b flex justify-between items-center">
-                            <span class="font-bold text-slate-700"><i class="fa-regular fa-calendar mr-2"></i>${group.date}</span>
-                            <span class="text-sm font-bold text-emerald-600">ยอดขายรวม: ${group.total.toLocaleString()}</span>
-                        </div>
-                        <table class="w-full text-sm"><tbody>${rows}</tbody></table>
-                    `;
+                    card.innerHTML = `<div class="bg-slate-50 px-4 py-3 border-b flex justify-between items-center"><span class="font-bold text-slate-700"><i class="fa-regular fa-calendar mr-2"></i>${group.date}</span><span class="text-sm font-bold text-emerald-600">ยอดขายรวม: ${group.total.toLocaleString()}</span></div><table class="w-full text-sm"><tbody>${rows}</tbody></table>`;
                     container.appendChild(card);
                 });
             },
@@ -671,6 +624,7 @@
 
                 let oldDebt = 0;
                 try {
+                    // Try fetch debt if online, else 0
                     const r = await api.post({ action: 'get_debt', name: name });
                     if(r.status==='success') oldDebt = r.debt;
                 } catch(e){}
@@ -691,12 +645,12 @@
                 const res = await api.post(payload);
                 if(res.status==='success') {
                     await this.printA5(payload, oldDebt);
-                    Swal.fire({icon:'success', title:'เรียบร้อย', showConfirmButton:false, timer:1500});
+                    const msg = res.offline ? 'บันทึกออฟไลน์แล้ว' : 'บันทึกเรียบร้อย';
+                    Swal.fire({icon:'success', title: msg, showConfirmButton:false, timer:1500});
                     this.resetForm(); 
                 }
             },
             async printA5(data, oldDebt) {
-                // Populate A5 Template
                 document.getElementById('r-name').innerText = data.customerName;
                 document.getElementById('r-inv').innerText = data.invoiceId;
                 document.getElementById('r-date').innerText = new Date(data.date).toLocaleDateString('th-TH');
@@ -732,7 +686,6 @@
                     debtDiv.classList.add('hidden');
                 }
 
-                // Render PDF
                 const el = document.getElementById('receipt-render-area');
                 const canvas = await html2canvas(el, {scale:2});
                 const img = canvas.toDataURL('image/jpeg');
