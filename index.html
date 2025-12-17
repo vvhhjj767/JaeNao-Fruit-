@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ผลไม้ By เจ๊เนาว์ - ระบบจัดการหน้าร้าน (Offline Mode)</title>
+    <title>ผลไม้ By เจ๊เนาว์ - ระบบจัดการหน้าร้าน (Cloud Drive)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
@@ -23,6 +23,10 @@
         .payment-option { border: 2px solid #e5e7eb; transition: all 0.2s; background: white; }
         .payment-option:hover { border-color: #a7f3d0; transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
         .payment-option.active { background-color: #ecfdf5; border-color: #059669; color: #047857; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2); }
+
+        .bank-chip { border: 1px solid #e5e7eb; transition: all 0.2s; cursor: pointer; }
+        .bank-chip:hover { background-color: #f0fdf4; border-color: #10b981; }
+        .bank-chip.selected { background-color: #d1fae5; border-color: #059669; color: #065f46; font-weight: bold; }
         
         input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
@@ -115,7 +119,17 @@
                                 <th class="p-3 text-left w-[35%]">สินค้า</th>
                                 <th class="p-3 text-right w-[15%]">ราคา</th>
                                 <th class="p-3 text-center w-[15%]">จำนวน</th>
-                                <th class="p-3 text-center w-[15%]">มัดจำ</th>
+                                <th class="p-3 text-center w-[15%]">
+                                    <div class="relative cursor-pointer group w-full mx-auto" title="คลิกเพื่อปรับมัดจำทั้งหมด">
+                                        <span class="text-xs font-bold text-slate-500 group-hover:text-emerald-600 transition-colors">มัดจำ <i class="fa-solid fa-caret-down text-[10px] ml-1 opacity-30 group-hover:opacity-100 transition-opacity"></i></span>
+                                        <select id="bulk-deposit-select" onchange="app.setAllDeposit(this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                            <option value="">-- ปรับทั้งหมด --</option>
+                                            <option value="0">ไม่มัดจำ</option>
+                                            <option value="100">100</option>
+                                            <option value="200">200</option>
+                                        </select>
+                                    </div>
+                                </th>
                                 <th class="p-3 text-right w-[15%]">รวม</th>
                                 <th class="w-[5%]"></th>
                             </tr>
@@ -154,12 +168,23 @@
                     </div>
                 </div>
                 <p class="text-xs font-bold text-slate-400 uppercase mb-3 relative z-10">ชำระโดย</p>
-                <div class="grid grid-cols-2 gap-3 mb-6 relative z-10">
+                <div class="grid grid-cols-2 gap-3 mb-3 relative z-10">
                     <div class="payment-option active p-3 rounded-xl cursor-pointer select-none flex flex-col items-center justify-center gap-1" onclick="app.setPayment('เงินสด', this)"><i class="fa-solid fa-money-bill-wave text-emerald-500 text-xl"></i><span class="text-xs font-bold">เงินสด</span></div>
                     <div class="payment-option p-3 rounded-xl cursor-pointer select-none flex flex-col items-center justify-center gap-1" onclick="app.setPayment('โอน (QR Code)', this)"><i class="fa-solid fa-qrcode text-blue-500 text-xl"></i><span class="text-xs font-bold">โอนเงิน</span></div>
                     <div class="payment-option p-3 rounded-xl cursor-pointer select-none flex flex-col items-center justify-center gap-1" onclick="app.setPayment('รอชำระ', this)"><i class="fa-solid fa-clock-rotate-left text-amber-500 text-xl"></i><span class="text-xs font-bold">รอชำระ</span></div>
                     <div class="payment-option p-3 rounded-xl cursor-pointer select-none flex flex-col items-center justify-center gap-1" onclick="app.setPayment('อื่นๆ', this)"><i class="fa-solid fa-ellipsis text-gray-400 text-xl"></i><span class="text-xs font-bold">อื่นๆ</span></div>
                 </div>
+                
+                <div id="bank-selector-area" class="hidden mb-4 bg-slate-50 p-3 rounded-xl border border-blue-100 relative z-10">
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="text-xs font-bold text-blue-500 uppercase">เลือกบัญชีรับเงิน</p>
+                        <button onclick="ui.openModal('bank-modal')" class="text-[10px] bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200 font-bold"><i class="fa-solid fa-gear"></i> จัดการ</button>
+                    </div>
+                    <div id="bank-list-chips" class="flex flex-wrap gap-2">
+                        <div class="text-xs text-slate-400 italic w-full text-center py-2">ยังไม่มีบัญชี (กดจัดการเพื่อเพิ่ม)</div>
+                    </div>
+                </div>
+
                 <button onclick="app.processCheckout()" class="w-full py-4 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-slate-800 shadow-xl flex justify-center items-center gap-3 transition transform active:scale-[0.98] relative z-10"><i class="fa-solid fa-print"></i> บันทึก & พิมพ์ A5</button>
             </div>
         </div>
@@ -234,6 +259,23 @@
             <button onclick="ui.closeModal('product-modal')" class="mt-5 w-full py-2 bg-slate-100 rounded-lg text-slate-600 text-sm font-medium">ปิดหน้าต่าง</button>
         </div>
     </div>
+    
+    <div id="bank-modal" class="hidden fixed inset-0 bg-slate-900/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 class="font-bold text-lg text-blue-600 mb-4 border-b pb-2 flex items-center gap-2"><i class="fa-solid fa-building-columns"></i> จัดการบัญชีธนาคาร</h3>
+            <div class="space-y-3 mb-4 bg-slate-50 p-3 rounded-lg border">
+                <input id="new-bank-name" class="custom-input w-full p-2 border rounded-lg text-sm" placeholder="ชื่อธนาคาร (เช่น กสิกร, ไทยพาณิชย์)">
+                <button onclick="app.addBank()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 shadow font-bold text-sm"><i class="fa-solid fa-plus"></i> เพิ่มบัญชี</button>
+            </div>
+            <div class="max-h-64 overflow-y-auto border rounded-lg">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-100 text-slate-500 font-semibold"><tr><th class="p-2 text-left">ชื่อธนาคาร</th><th class="w-10"></th></tr></thead>
+                    <tbody id="bank-list-manage" class="divide-y text-slate-700"></tbody>
+                </table>
+            </div>
+            <button onclick="ui.closeModal('bank-modal')" class="mt-5 w-full py-2 bg-slate-100 rounded-lg text-slate-600 text-sm font-medium">ปิดหน้าต่าง</button>
+        </div>
+    </div>
 
     <div id="report-modal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col shadow-2xl">
@@ -274,7 +316,7 @@
 
     <script>
         // *** ใส่ URL ของคุณที่นี่ ***
-        const API_URL = 'https://script.google.com/macros/s/AKfycbx3-32lGgn9fpSpQS1XD-7ERqiC8vgucrWM21uu8ZsZp8w00WtJLGkg2MNAWJOj0KWXhA/exec'; 
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxuYZckS0--ir2x11nQtbvx-TKqytysvM71-DO7YklWYYW_dD9P_EYbrVsJbtBZi608dQ/exec'; 
 
         // --- OFFLINE MANAGER (Queue System) ---
         const queueManager = {
@@ -283,8 +325,14 @@
             addToQueue(data) {
                 const q = this.getQueue();
                 q.push(data);
-                localStorage.setItem(this.key, JSON.stringify(q));
-                this.updateIndicator();
+                // Tip: localStorage มีจำกัด (ประมาณ 5MB) ถ้าเก็บไฟล์ PDF เยอะๆ อาจเต็มได้
+                // แต่สำหรับ Offline Mode ชั่วคราวถือว่าใช้งานได้
+                try {
+                    localStorage.setItem(this.key, JSON.stringify(q));
+                    this.updateIndicator();
+                } catch(e) {
+                    Swal.fire('หน่วยความจำเต็ม', 'ไม่สามารถบันทึก Offline เพิ่มได้ กรุณาต่อเน็ต', 'error');
+                }
             },
             async sync() {
                 const q = this.getQueue();
@@ -332,9 +380,12 @@
         };
 
         const api = {
-            async post(payload) {
-                document.getElementById('loader').classList.remove('hidden');
-                document.getElementById('loader').querySelector('p').innerText = "กำลังดำเนินการ...";
+            async post(payload, background = false) {
+                // background=true คือการส่งแบบเงียบๆ ไม่ต้องโชว์ Loading (ใช้ตอนส่ง PDF)
+                if (!background) {
+                    document.getElementById('loader').classList.remove('hidden');
+                    document.getElementById('loader').querySelector('p').innerText = "กำลังดำเนินการ...";
+                }
                 
                 try {
                     const res = await fetch(API_URL, {
@@ -343,18 +394,18 @@
                         body: JSON.stringify(payload)
                     });
                     const data = await res.json();
-                    document.getElementById('loader').classList.add('hidden');
+                    if (!background) document.getElementById('loader').classList.add('hidden');
                     return data;
                 } catch (e) {
-                    document.getElementById('loader').classList.add('hidden');
+                    if (!background) document.getElementById('loader').classList.add('hidden');
                     console.warn("Offline Mode Triggered", e);
                     
-                    // Only save 'save_transaction' to queue
-                    if (payload.action === 'save_transaction') {
+                    // หากเป็นคำสั่ง Save หรือ Upload PDF ให้เข้าคิว
+                    if (payload.action === 'save_transaction' || payload.action === 'upload_pdf') {
                         queueManager.addToQueue(payload);
-                        return { status: 'success', offline: true }; // Fake success
+                        return { status: 'success', offline: true };
                     } else {
-                        throw e; // Check Debt / Report needs online
+                        throw e;
                     }
                 }
             }
@@ -364,13 +415,16 @@
             data: {
                 cart: [],
                 products: JSON.parse(localStorage.getItem('pos_products')) || [{id:1, name:'ทุเรียนหมอนทอง', price:150}],
+                banks: JSON.parse(localStorage.getItem('pos_banks')) || [],
                 reportData: [],
                 payMethod: 'เงินสด',
+                selectedBank: null,
                 invNo: ''
             },
             init() {
                 this.resetForm();
                 this.renderProdList();
+                this.renderBankList(); // Manage Modal List
                 this.updateTime();
                 setInterval(() => this.updateTime(), 60000);
                 document.getElementById('inp-discount').addEventListener('input', () => this.renderCart());
@@ -379,6 +433,7 @@
             resetForm() {
                 this.data.cart = [];
                 this.data.payMethod = 'เงินสด';
+                this.data.selectedBank = null;
                 this.genInv();
                 document.getElementById('inv-date').valueAsDate = new Date();
                 document.getElementById('cust-name').value = '';
@@ -386,7 +441,11 @@
                 document.getElementById('debt-pay-name').value = '';
                 document.getElementById('debt-pay-amt').value = '';
                 document.getElementById('debt-display-area').classList.add('hidden');
-                this.renderCart();
+                
+                const bulkSelect = document.getElementById('bulk-deposit-select');
+                if(bulkSelect) bulkSelect.value = '';
+
+                this.addRow(); // *** Add initial row ***
                 this.setPayment('เงินสด', document.querySelector('.payment-option:first-child'));
             },
             updateTime() {
@@ -421,8 +480,65 @@
                 localStorage.setItem('pos_products', JSON.stringify(this.data.products));
                 this.renderProdList(); this.renderCart();
             },
+            // --- Bank Management ---
+            renderBankList() {
+                // Render List in Modal
+                document.getElementById('bank-list-manage').innerHTML = this.data.banks.map(b => 
+                    `<tr><td class="p-2 font-medium">${b.name}</td>
+                    <td class="text-center text-red-400 hover:text-red-600 cursor-pointer p-2" onclick="app.delBank(${b.id})"><i class="fa-solid fa-trash"></i></td></tr>`
+                ).join('');
+                
+                // Render Chips in Checkout
+                const chipsContainer = document.getElementById('bank-list-chips');
+                if(this.data.banks.length === 0) {
+                    chipsContainer.innerHTML = `<div class="text-xs text-slate-400 italic w-full text-center py-2">ยังไม่มีบัญชี (กดจัดการเพื่อเพิ่ม)</div>`;
+                } else {
+                    chipsContainer.innerHTML = this.data.banks.map(b => 
+                        `<div class="bank-chip px-3 py-1.5 rounded-lg text-xs font-medium ${this.data.selectedBank === b.name ? 'selected' : 'bg-white text-slate-600'}" 
+                        onclick="app.selectBank('${b.name}', this)">
+                        <i class="fa-solid fa-building-columns mr-1"></i> ${b.name}
+                        </div>`
+                    ).join('');
+                }
+            },
+            addBank() {
+                const n = document.getElementById('new-bank-name').value.trim();
+                if(n) {
+                    this.data.banks.push({id:Date.now(), name:n});
+                    localStorage.setItem('pos_banks', JSON.stringify(this.data.banks));
+                    document.getElementById('new-bank-name').value = '';
+                    this.renderBankList();
+                }
+            },
+            delBank(id) {
+                this.data.banks = this.data.banks.filter(b=>b.id!==id);
+                localStorage.setItem('pos_banks', JSON.stringify(this.data.banks));
+                if(this.data.selectedBank && !this.data.banks.find(b=>b.name === this.data.selectedBank)) {
+                    this.data.selectedBank = null;
+                }
+                this.renderBankList();
+            },
+            selectBank(name, el) {
+                this.data.selectedBank = name;
+                document.querySelectorAll('.bank-chip').forEach(c => c.classList.remove('selected', 'bg-emerald-100', 'border-emerald-500', 'text-emerald-700'));
+                el.classList.add('selected');
+            },
+            // -----------------------
             addRow() {
-                this.data.cart.push({id:Date.now(), prodId:'', price:0, qty:'', deposit:0});
+                // Logic to copy previous item
+                let newItem = {id:Date.now(), prodId:'', price:0, qty:'', deposit:0, name:''};
+                
+                if (this.data.cart.length > 0) {
+                    const lastItem = this.data.cart[this.data.cart.length - 1];
+                    if (lastItem.prodId) {
+                        newItem.prodId = lastItem.prodId;
+                        newItem.name = lastItem.name;
+                        newItem.price = lastItem.price;
+                        newItem.deposit = lastItem.deposit; // Copy deposit as well for convenience
+                    }
+                }
+
+                this.data.cart.push(newItem);
                 this.renderCart();
             },
             updateRow(id, key, val) {
@@ -439,6 +555,13 @@
             delRow(id) {
                 this.data.cart = this.data.cart.filter(x=>x.id!==id);
                 this.renderCart();
+            },
+            setAllDeposit(val) {
+                if(val === "") return;
+                const v = parseFloat(val);
+                this.data.cart.forEach(item => item.deposit = v);
+                this.renderCart();
+                document.getElementById('bulk-deposit-select').value = ""; // Reset to allow re-selection
             },
             renderCart() {
                 const tbody = document.getElementById('cart-body');
@@ -477,6 +600,16 @@
                 this.data.payMethod = m;
                 document.querySelectorAll('.payment-option').forEach(x=>x.classList.remove('active'));
                 if(el) el.classList.add('active');
+                
+                // Toggle Bank Selector
+                const bankArea = document.getElementById('bank-selector-area');
+                if(m === 'โอน (QR Code)') {
+                    bankArea.classList.remove('hidden');
+                    this.renderBankList(); // Refresh chips
+                } else {
+                    bankArea.classList.add('hidden');
+                    this.data.selectedBank = null;
+                }
             },
             async checkDebt() {
                 const name = document.getElementById('cust-name').value.trim();
@@ -622,6 +755,15 @@
                 const total = parseFloat(document.getElementById('sum-total').innerText.replace(/,/g,''));
                 if(!name || (this.data.cart.length===0 && total <= 0)) return Swal.fire('ข้อมูลไม่ครบ', '', 'warning');
 
+                // Validate Transfer Payment
+                let finalPayMethod = this.data.payMethod;
+                if (finalPayMethod === 'โอน (QR Code)') {
+                    if (!this.data.selectedBank) {
+                        return Swal.fire('กรุณาเลือกบัญชี', 'โปรดเลือกบัญชีธนาคารที่รับเงิน', 'warning');
+                    }
+                    finalPayMethod = `โอน(${this.data.selectedBank})`;
+                }
+
                 let oldDebt = 0;
                 try {
                     // Try fetch debt if online, else 0
@@ -638,17 +780,32 @@
                     customerName: name,
                     items: itemsStr,
                     totalAmount: total,
-                    paymentMethod: this.data.payMethod,
+                    paymentMethod: finalPayMethod,
                     note: 'ขายสินค้า'
                 };
 
                 const res = await api.post(payload);
                 if(res.status==='success') {
-                    await this.printA5(payload, oldDebt);
+                    // *** บันทึกเสร็จแล้วจึงสร้าง PDF และ upload ***
+                    // หมายเหตุ: ถึงแม้บันทึกเป็น offline (res.offline=true) เราก็ยังเรียก printA5
+                    // เพราะ printA5 จะจัดการ uploadPdf ซึ่ง uploadPdf จะจัดการเข้า Queue อัตโนมัติถ้าเน็ตหลุด
+                    await this.printA5({...payload, paymentMethod: finalPayMethod}, oldDebt);
+                    
                     const msg = res.offline ? 'บันทึกออฟไลน์แล้ว' : 'บันทึกเรียบร้อย';
                     Swal.fire({icon:'success', title: msg, showConfirmButton:false, timer:1500});
                     this.resetForm(); 
                 }
+            },
+            async uploadPdf(invId, base64) {
+                 const payload = {
+                     action: 'upload_pdf',
+                     fileName: `Receipt_${invId}.pdf`,
+                     fileData: base64,
+                     mimeType: 'application/pdf'
+                 };
+                 // ส่งแบบ background=true เพื่อไม่ให้ user ต้องรอนาน
+                 // ถ้าเน็ตหลุด api.post จะโยนลง queueManager ให้อัตโนมัติ
+                 api.post(payload, true); 
             },
             async printA5(data, oldDebt) {
                 document.getElementById('r-name').innerText = data.customerName;
@@ -693,12 +850,20 @@
                 const w = pdf.internal.pageSize.getWidth();
                 const h = (canvas.height * w) / canvas.width;
                 pdf.addImage(img, 'JPEG', 0, 0, w, h);
+                
+                // 1. Download ให้ User เหมือนเดิม
                 pdf.save(`${data.invoiceId}.pdf`);
+
+                // 2. แปลงเป็น Base64 และ Upload ขึ้น Drive
+                // output('datauristring') จะได้ string ยาวๆ แบบ "data:application/pdf;base64,JVBER..."
+                // เราต้อง split เอาเฉพาะส่วนหลังเครื่องหมายจุลภาค
+                const pdfBase64 = pdf.output('datauristring').split(',')[1];
+                this.uploadPdf(data.invoiceId, pdfBase64);
             }
         };
 
         const ui = {
-            openModal(id) { document.getElementById(id).classList.remove('hidden'); if(id==='product-modal') app.renderProdList(); },
+            openModal(id) { document.getElementById(id).classList.remove('hidden'); if(id==='product-modal') app.renderProdList(); if(id==='bank-modal') app.renderBankList(); },
             closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         };
 
