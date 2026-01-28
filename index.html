@@ -235,10 +235,15 @@
                 <div id="debt-display-area" class="hidden bg-red-50 p-4 rounded-xl text-center border border-red-100">
                     <p class="text-xs text-red-500 uppercase tracking-wide">ยอดหนี้ปัจจุบัน</p>
                     <p class="text-3xl font-bold text-red-600 mt-1" id="modal-debt-val">0.00</p>
+                    
+                    <!-- NEW: Breakdown List -->
+                    <div id="debt-breakdown" class="mt-3 text-left border-t border-red-200 pt-2 hidden max-h-32 overflow-y-auto">
+                        <!-- Items will be injected here -->
+                    </div>
                 </div>
                 <input id="debt-pay-amt" type="number" class="custom-input w-full p-3 border rounded-xl text-right text-xl font-bold text-emerald-600" placeholder="0.00">
                 <div class="flex gap-3 pt-3">
-                    <button onclick="ui.closeModal('debt-modal')" class="flex-1 py-3 bg-slate-100 rounded-xl text-slate-600 font-medium">ยกเลิก</button>
+                    <button onclick="app.cancelDebtModal()" class="flex-1 py-3 bg-slate-100 rounded-xl text-slate-600 font-medium">ยกเลิก</button>
                     <button onclick="app.submitDebtPayment()" class="flex-1 py-3 bg-amber-500 text-white rounded-xl font-bold shadow-lg hover:bg-amber-600">บันทึก</button>
                 </div>
             </div>
@@ -284,14 +289,56 @@
                 <button onclick="ui.closeModal('report-modal')" class="text-slate-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="p-6 overflow-y-auto flex-1 bg-slate-50/50">
-                <div class="mb-4 flex gap-2">
-                    <input type="text" id="rpt-search" placeholder="ค้นหาลูกค้า, เลขบิล..." class="p-2 border rounded-lg w-full md:w-1/3 shadow-sm" onkeyup="app.renderReportTable()">
+                <!-- Advanced Filters -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 mb-5 shadow-sm space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div class="col-span-1 md:col-span-2">
+                             <label class="text-xs font-bold text-slate-400 block mb-1">ค้นหา (ชื่อ/เลขบิล)</label>
+                             <input type="text" id="rpt-search" placeholder="พิมพ์เพื่อค้นหา..." class="p-2 border rounded-lg w-full text-sm" onkeyup="app.renderReportTable()">
+                        </div>
+                         <div>
+                             <label class="text-xs font-bold text-slate-400 block mb-1">บัญชีรับเงิน</label>
+                             <select id="rpt-bank-filter" class="p-2 border rounded-lg w-full text-sm" onchange="app.renderReportTable()">
+                                 <!-- Options will be populated dynamically -->
+                             </select>
+                        </div>
+                    </div>
+                     <div class="flex items-center gap-2">
+                        <div class="flex-1">
+                             <label class="text-xs font-bold text-slate-400 block mb-1">ตั้งแต่วันที่</label>
+                             <input type="date" id="rpt-start-date" class="p-2 border rounded-lg w-full text-sm" onchange="app.renderReportTable()">
+                        </div>
+                        <div class="text-slate-400 self-end pb-2">-</div>
+                        <div class="flex-1">
+                             <label class="text-xs font-bold text-slate-400 block mb-1">ถึงวันที่</label>
+                             <input type="date" id="rpt-end-date" class="p-2 border rounded-lg w-full text-sm" onchange="app.renderReportTable()">
+                        </div>
+                        <div class="self-end">
+                            <button onclick="app.clearReportFilters()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm hover:bg-slate-200 font-bold">ล้าง</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm"><p class="text-xs text-emerald-500 font-bold uppercase">ขายวันนี้</p><p class="text-2xl font-bold text-emerald-700" id="rpt-today">0</p></div>
-                    <div class="bg-white p-4 rounded-xl border border-amber-100 shadow-sm"><p class="text-xs text-amber-500 font-bold uppercase">รอชำระสุทธิ</p><p class="text-2xl font-bold text-amber-600" id="rpt-pending">0</p></div>
-                    <div class="bg-white p-4 rounded-xl border border-blue-100 shadow-sm"><p class="text-xs text-blue-500 font-bold uppercase">ทั้งหมด</p><p class="text-2xl font-bold text-blue-600" id="rpt-count">0</p></div>
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                        <p class="text-[10px] text-indigo-500 font-bold uppercase">ยอดขายเดือนนี้</p>
+                        <p class="text-xl font-bold text-indigo-700 mt-1" id="rpt-month">0</p>
+                    </div>
+                     <div class="bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
+                        <p class="text-[10px] text-blue-500 font-bold uppercase">ยอดขายสัปดาห์นี้</p>
+                        <p class="text-xl font-bold text-blue-700 mt-1" id="rpt-week">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
+                        <p class="text-[10px] text-emerald-500 font-bold uppercase">ยอดขายวันนี้</p>
+                        <p class="text-xl font-bold text-emerald-700 mt-1" id="rpt-today">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-amber-100 shadow-sm ring-2 ring-amber-50">
+                        <p class="text-[10px] text-amber-500 font-bold uppercase">ยอดรวมจากการค้นหา (Filtered)</p>
+                        <p class="text-xl font-bold text-amber-600 mt-1" id="rpt-filter-total">0</p>
+                    </div>
                 </div>
+                
                 <div id="rpt-container" class="space-y-6"></div>
             </div>
         </div>
@@ -452,6 +499,14 @@
                 document.getElementById('inp-discount').addEventListener('input', () => this.renderCart());
                 queueManager.updateIndicator();
             },
+            clearDebtForm() {
+                document.getElementById('debt-pay-name').value = '';
+                document.getElementById('debt-pay-amt').value = '';
+                document.getElementById('modal-debt-val').innerText = '0.00';
+                document.getElementById('debt-display-area').classList.add('hidden');
+                document.getElementById('debt-breakdown').innerHTML = '';
+                document.getElementById('debt-breakdown').classList.add('hidden');
+            },
             resetForm() {
                 this.data.cart = [];
                 this.data.payMethod = 'เงินสด';
@@ -460,15 +515,19 @@
                 document.getElementById('inv-date').valueAsDate = new Date();
                 document.getElementById('cust-name').value = '';
                 document.getElementById('inp-discount').value = '';
-                document.getElementById('debt-pay-name').value = '';
-                document.getElementById('debt-pay-amt').value = '';
-                document.getElementById('debt-display-area').classList.add('hidden');
+                
+                // Clear Debt Form Data as well
+                this.clearDebtForm();
                 
                 const bulkSelect = document.getElementById('bulk-deposit-select');
                 if(bulkSelect) bulkSelect.value = '';
 
                 this.addRow(); // *** Add initial row ***
                 this.setPayment('เงินสด', document.querySelector('.payment-option:first-child'));
+            },
+            cancelDebtModal() {
+                ui.closeModal('debt-modal');
+                this.clearDebtForm();
             },
             updateTime() {
                 const now = new Date();
@@ -644,13 +703,64 @@
             async checkDebtInModal() {
                 const name = document.getElementById('debt-pay-name').value.trim();
                 if(!name) return;
+                
+                // Reset display
+                document.getElementById('modal-debt-val').innerText = "...";
+                document.getElementById('debt-display-area').classList.remove('hidden');
+                const breakdownDiv = document.getElementById('debt-breakdown');
+                breakdownDiv.innerHTML = '';
+                breakdownDiv.classList.add('hidden');
+
                 try {
-                    const res = await api.post({ action: 'get_debt', name: name });
-                    if(res.status==='success') {
-                        document.getElementById('modal-debt-val').innerText = res.debt.toLocaleString();
-                        document.getElementById('debt-display-area').classList.remove('hidden');
+                    // Fetch all report to calculate detailed debt
+                    const res = await api.post({ action: 'get_report' });
+                    
+                    if(res.status === 'success') {
+                        const transactions = res.data;
+                        
+                        // Filter for this customer
+                        const custTx = transactions.filter(t => t.customerName === name);
+                        
+                        // 1. Sort Old -> New
+                        custTx.sort((a,b) => (a.date + a.time).localeCompare(b.date + b.time));
+                        
+                        // 2. Calculate Total Debt vs Total Paid
+                        let pool = custTx.filter(x => x.note === 'ชำระหนี้ค้าง').reduce((s,x) => s + x.totalAmount, 0);
+                        let totalDebt = 0;
+                        const outstandingBills = [];
+
+                        custTx.forEach(x => {
+                            if(x.note !== 'ชำระหนี้ค้าง' && (x.paymentMethod === 'รอชำระ' || x.paymentMethod === 'ชำระแล้ว (C)')) {
+                                if(pool >= x.totalAmount) {
+                                    pool -= x.totalAmount;
+                                } else {
+                                    const remaining = x.totalAmount - pool;
+                                    pool = 0;
+                                    outstandingBills.push({ ...x, remaining });
+                                    totalDebt += remaining;
+                                }
+                            }
+                        });
+
+                        // Display Total
+                        document.getElementById('modal-debt-val').innerText = totalDebt.toLocaleString();
+
+                        // Display Breakdown
+                        if(outstandingBills.length > 0) {
+                            breakdownDiv.classList.remove('hidden');
+                            const listHtml = outstandingBills.map(b => `
+                                <div class="flex justify-between border-b border-red-100 pb-1 text-slate-600 text-xs">
+                                    <span>${b.date} (${b.invoiceId})</span>
+                                    <span class="font-bold text-red-500">${b.remaining.toLocaleString()}</span>
+                                </div>
+                            `).join('');
+                            breakdownDiv.innerHTML = `<p class="font-bold text-slate-500 text-[10px] mb-1 uppercase">รายการค้างชำระ:</p>${listHtml}`;
+                        }
                     }
-                } catch(e) {}
+                } catch(e) {
+                    document.getElementById('modal-debt-val').innerText = "0.00";
+                    console.error(e);
+                }
             },
             async submitDebtPayment() {
                 const name = document.getElementById('debt-pay-name').value.trim();
@@ -681,72 +791,156 @@
                     const res = await api.post({ action: 'get_report' });
                     if(res.status==='success') {
                         this.data.reportData = res.data;
+                        
+                        // Populate Bank Filter with Unique Banks from History + Current Settings
+                        const select = document.getElementById('rpt-bank-filter');
+                        const staticOpts = '<option value="">-- ทั้งหมด --</option><option value="เงินสด">เงินสด</option><option value="รอชำระ">รอชำระ</option>';
+                        
+                        // 1. Collect unique banks from History
+                        const historyBanks = new Set();
+                        this.data.reportData.forEach(d => {
+                            // Extract "Bank Name" from "โอน(Bank Name)"
+                            const match = d.paymentMethod.match(/โอน\((.*?)\)/);
+                            if(match && match[1]) {
+                                historyBanks.add(match[1]);
+                            }
+                        });
+                        
+                        // 2. Add current active banks from settings
+                        this.data.banks.forEach(b => historyBanks.add(b.name));
+                        
+                        // 3. Sort and Generate Options
+                        const sortedBanks = Array.from(historyBanks).sort();
+                        const dynOpts = sortedBanks.map(name => `<option value="${name}">โอน (${name})</option>`).join('');
+                        
+                        select.innerHTML = staticOpts + dynOpts;
+
                         this.renderReportTable();
                     }
                 } catch(e) { Swal.fire('Offline', 'ไม่สามารถดูรายงานได้ขณะออฟไลน์', 'warning'); }
             },
+            clearReportFilters() {
+                document.getElementById('rpt-search').value = '';
+                document.getElementById('rpt-bank-filter').value = '';
+                document.getElementById('rpt-start-date').value = '';
+                document.getElementById('rpt-end-date').value = '';
+                this.renderReportTable();
+            },
             renderReportTable() {
                 const search = document.getElementById('rpt-search').value.toLowerCase();
-                const container = document.getElementById('rpt-container');
-                container.innerHTML = '';
+                const bankFilter = document.getElementById('rpt-bank-filter').value;
+                const startDate = document.getElementById('rpt-start-date').value;
+                const endDate = document.getElementById('rpt-end-date').value;
 
-                // --- ส่วนที่ 1: คำนวณยอดสรุปด้านบน (เหมือนเดิม) ---
-                const todayStr = new Date().toISOString().slice(0,10);
-                const todaySales = this.data.reportData.filter(d => d.date.startsWith(todayStr) && d.note !== 'ชำระหนี้ค้าง').reduce((a,b)=>a+b.totalAmount,0);
-                let totalCredit = 0; let totalPaid = 0;
-                this.data.reportData.forEach(d => {
-                    if (d.paymentMethod === 'รอชำระ' || d.paymentMethod === 'ชำระแล้ว (C)') totalCredit += d.totalAmount;
-                    if (d.note === 'ชำระหนี้ค้าง') totalPaid += d.totalAmount;
+                // --- 1. FILTER DATA ---
+                const filtered = this.data.reportData.filter(d => {
+                    // Text Search
+                    const matchText = (d.customerName||'').toLowerCase().includes(search) || (d.invoiceId||'').toLowerCase().includes(search);
+                    
+                    // Date Range
+                    let matchDate = true;
+                    if(startDate && d.date < startDate) matchDate = false;
+                    if(endDate && d.date > endDate) matchDate = false;
+
+                    // Bank Filter
+                    let matchBank = true;
+                    if(bankFilter) {
+                        if(bankFilter === 'เงินสด') {
+                             if(!d.paymentMethod.includes('เงินสด')) matchBank = false;
+                        } else if(bankFilter === 'รอชำระ') {
+                             if(!d.paymentMethod.includes('รอชำระ')) matchBank = false;
+                        } else {
+                             // Match specific bank name inside parentheses e.g. "โอน(KBank)"
+                             // Use exact match for bank name to avoid partial confusion
+                             if(!d.paymentMethod.includes(`โอน(${bankFilter})`)) matchBank = false;
+                        }
+                    }
+                    return matchText && matchDate && matchBank;
                 });
-                document.getElementById('rpt-today').innerText = todaySales.toLocaleString();
-                document.getElementById('rpt-pending').innerText = (totalCredit - totalPaid).toLocaleString();
-                document.getElementById('rpt-count').innerText = this.data.reportData.length;
 
-                // --- ส่วนที่ 2: (เพิ่มใหม่) คำนวณยอดค้างรายบิลแบบ Real-time ---
-                const debtMap = {}; // เก็บยอดคงเหลือของแต่ละ Invoice ID
-                const custGroups = {};
+                // --- 2. CALCULATE GLOBAL STATS (Unfiltered Month/Week/Day) ---
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+                const todayStr = now.toISOString().slice(0,10);
                 
-                // แยกกลุ่มตามลูกค้า
+                // Week Helper
+                const getWeekNumber = (d) => {
+                    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+                    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+                    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+                    var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+                    return [d.getUTCFullYear(), weekNo];
+                };
+                const [currYearWeek, currWeek] = getWeekNumber(now);
+
+                let sumMonth = 0, sumWeek = 0, sumToday = 0;
+                
+                this.data.reportData.forEach(d => {
+                    if(d.note === 'ชำระหนี้ค้าง') return; 
+                    
+                    const dDate = new Date(d.date);
+                    // Month
+                    if(dDate.getMonth() === currentMonth && dDate.getFullYear() === currentYear) {
+                        sumMonth += d.totalAmount;
+                    }
+                    // Week
+                    const [y, w] = getWeekNumber(dDate);
+                    if(y === currYearWeek && w === currWeek) {
+                        sumWeek += d.totalAmount;
+                    }
+                    // Today
+                    if(d.date === todayStr) {
+                        sumToday += d.totalAmount;
+                    }
+                });
+
+                // --- 3. CALCULATE FILTERED TOTAL ---
+                let sumFiltered = 0;
+                filtered.forEach(d => {
+                    if(d.note !== 'ชำระหนี้ค้าง') sumFiltered += d.totalAmount;
+                });
+
+                // Update Cards
+                document.getElementById('rpt-month').innerText = sumMonth.toLocaleString();
+                document.getElementById('rpt-week').innerText = sumWeek.toLocaleString();
+                document.getElementById('rpt-today').innerText = sumToday.toLocaleString();
+                document.getElementById('rpt-filter-total').innerText = sumFiltered.toLocaleString();
+
+                // --- 4. PREPARE DEBT CALC FOR DISPLAY ---
+                const debtMap = {};
+                const custGroups = {};
                 this.data.reportData.forEach(x => {
                     if(!custGroups[x.customerName]) custGroups[x.customerName] = [];
                     custGroups[x.customerName].push(x);
                 });
-
-                // วนลูปคำนวณตัดหนี้ทีละลูกค้า (เรียงเก่า -> ใหม่)
                 Object.values(custGroups).forEach(group => {
-                    // เรียงข้อมูลตามเวลา (Invoice ID มักจะเรียงตามเวลาอยู่แล้ว หรือใช้ Date ก็ได้)
-                    // ในที่นี้ sort กลับให้เป็น เก่า -> ใหม่ เพื่อตัดหนี้
                     group.sort((a,b) => (a.date + a.time).localeCompare(b.date + b.time));
-                    
-                    // รวมเงินที่ลูกค้าเคยจ่ายหนี้มาทั้งหมด (Pool)
                     let pool = group.filter(x => x.note === 'ชำระหนี้ค้าง').reduce((s,x) => s + x.totalAmount, 0);
-                    
-                    // วนตัดหนี้จากบิล
                     group.forEach(x => {
                         if(x.note !== 'ชำระหนี้ค้าง' && (x.paymentMethod === 'รอชำระ' || x.paymentMethod === 'ชำระแล้ว (C)')) {
-                            if(pool >= x.totalAmount) {
-                                // เงินใน Pool พอจ่ายบิลนี้ -> ยอดค้างเป็น 0
-                                debtMap[x.invoiceId] = 0;
-                                pool -= x.totalAmount;
-                            } else {
-                                // เงินใน Pool ไม่พอ -> ยอดค้าง = ยอดบิล - เงินที่เหลือ
-                                debtMap[x.invoiceId] = x.totalAmount - pool;
-                                pool = 0; // เงินหมดแล้ว
-                            }
+                            if(pool >= x.totalAmount) { debtMap[x.invoiceId] = 0; pool -= x.totalAmount; } 
+                            else { debtMap[x.invoiceId] = x.totalAmount - pool; pool = 0; }
                         }
                     });
                 });
-                // --------------------------------------------------------
 
-                const filtered = this.data.reportData.filter(d => 
-                    (d.customerName||'').toLowerCase().includes(search) || 
-                    (d.invoiceId||'').toLowerCase().includes(search)
-                );
+                // --- 5. RENDER GROUPED TABLE ---
+                const container = document.getElementById('rpt-container');
+                container.innerHTML = '';
 
+                // Group filtered data by Date
                 const grouped = filtered.reduce((acc, curr) => {
                     const date = new Date(curr.date).toLocaleDateString('th-TH');
-                    if (!acc[date]) acc[date] = { date, total: 0, items: [] };
-                    if (curr.note !== 'ชำระหนี้ค้าง') acc[date].total += curr.totalAmount; 
+                    if (!acc[date]) acc[date] = { date, total: 0, pending: 0, items: [] };
+                    
+                    if (curr.note !== 'ชำระหนี้ค้าง') {
+                        acc[date].total += curr.totalAmount;
+                        // Check if it was originally 'รอชำระ' or marked as such
+                        if(curr.paymentMethod.includes('รอชำระ')) {
+                            acc[date].pending += curr.totalAmount;
+                        }
+                    }
                     acc[date].items.push(curr);
                     return acc;
                 }, {});
@@ -770,22 +964,16 @@
                         else if(d.paymentMethod.includes('รอชำระ')) badgeClass = 'bg-amber-100 text-amber-700';
                         if(d.note === 'ชำระหนี้ค้าง') badgeClass = 'bg-purple-100 text-purple-700';
 
-                        // --- ส่วนแสดงผลสถานะ (แก้ไข) ---
                         let displayStatus = d.note === 'ชำระหนี้ค้าง' ? 'รับชำระหนี้' : d.paymentMethod;
-                        
-                        // ถ้าเป็นบิลรอชำระ ให้เช็คยอดคงเหลือจาก debtMap
                         if(d.paymentMethod === 'รอชำระ') {
                             const remain = debtMap[d.invoiceId];
                             if(remain !== undefined && remain > 0) {
-                                // ปรับให้แสดงผลบรรทัดเดียว: รอชำระ(ยอด)
                                 displayStatus = `รอชำระ<span class="text-red-600 font-bold">(${remain.toLocaleString()})</span>`;
                             } else if (remain === 0) {
-                                // ถ้าคำนวณแล้วเหลือ 0 แต่สถานะยังเป็น รอชำระ (อาจจะเพราะยังไม่ได้กดรับยอดใหม่)
                                 displayStatus = `<span class="text-green-600">ชำระครบแล้ว</span>`;
                                 badgeClass = 'bg-green-100 text-green-700';
                             }
                         }
-                        // -----------------------------
 
                         return `<tr class="hover:bg-slate-50 border-b last:border-0 ${isDebtPay ? 'bg-purple-50':''}">
                             <td class="p-3 w-[20%] text-xs font-mono text-slate-400">${d.time}<br>${d.invoiceId}</td>
@@ -796,7 +984,16 @@
                         </tr>`;
                     }).join('');
 
-                    card.innerHTML = `<div class="bg-slate-50 px-4 py-3 border-b flex justify-between items-center"><span class="font-bold text-slate-700"><i class="fa-regular fa-calendar mr-2"></i>${group.date}</span><span class="text-sm font-bold text-emerald-600">ยอดขายรวม: ${group.total.toLocaleString()}</span></div><table class="w-full text-sm"><tbody>${rows}</tbody></table>`;
+                    card.innerHTML = `
+                        <div class="bg-slate-50 px-4 py-3 border-b flex justify-between items-center">
+                            <span class="font-bold text-slate-700 flex items-center gap-2"><i class="fa-regular fa-calendar"></i> ${group.date}</span>
+                            <div class="text-sm flex gap-4">
+                                <span class="font-bold text-slate-500">รอชำระ: <span class="text-amber-600">${group.pending.toLocaleString()}</span></span>
+                                <span class="font-bold text-emerald-600">ขายรวม: ${group.total.toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <table class="w-full text-sm"><tbody>${rows}</tbody></table>
+                    `;
                     container.appendChild(card);
                 });
             },
