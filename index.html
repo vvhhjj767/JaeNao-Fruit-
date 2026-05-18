@@ -1205,6 +1205,7 @@ const app = {
         try { const res = await api.post({ action: 'get_debt', name: name }); if(res.status==='success') Swal.fire(`หนี้คงค้าง: ${res.debt.toLocaleString('th-TH')} บาท`, name, 'info'); } catch(e) {}
     },
 
+    // *** ส่วนแก้ไขที่ 1: เปลี่ยนลอจิกการนับหนี้ให้ครอบคลุมทั้ง 'รอชำระ', 'ชำระแล้ว' และ 'ชำระครบแล้ว' ***
     async checkDebtInModal() {
         const name = document.getElementById('debt-pay-name').value.trim();
         if(!name) return;
@@ -1216,8 +1217,13 @@ const app = {
             if(res.status === 'success') {
                 const transactions = res.data; const custTx = transactions.filter(t => t.customerName === name); custTx.sort((a,b) => (a.date + a.time).localeCompare(b.date + b.time));
                 const debtMap = {}; const debtBills = [];
-                // *** เปลี่ยนลอจิก ลบ ชำระแล้ว (C) ออก ***
-                custTx.forEach(x => { if(x.note !== 'ชำระหนี้ค้าง' && x.paymentMethod.includes('รอชำระ')) { debtMap[x.invoiceId] = x.totalAmount; debtBills.push(x); } });
+                
+                custTx.forEach(x => { 
+                    if(x.note !== 'ชำระหนี้ค้าง' && (x.paymentMethod.includes('รอชำระ') || x.paymentMethod.includes('ชำระแล้ว') || x.paymentMethod.includes('ชำระครบแล้ว'))) { 
+                        debtMap[x.invoiceId] = x.totalAmount; 
+                        debtBills.push(x); 
+                    } 
+                });
 
                 let generalPool = 0;
                 custTx.forEach(x => {
@@ -1263,7 +1269,7 @@ const app = {
         const total = document.getElementById('modal-debt-val').innerText;
         if(!list || list.length === 0) return Swal.fire('ไม่พบยอดค้าง', 'ไม่มีรายการหนี้ให้พิมพ์', 'warning');
         
-        // สั่งเปิดหน้าต่างรอก่อนเลย ป้องกันบล็อก Pop-up
+        // --- แก้ไขการพิมพ์ให้เปิดหน้าต่างขึ้นมารอก่อน กัน Pop-up โดนบล็อก ---
         const printWindow = window.open('', '_blank');
         if(!printWindow) return Swal.fire('แจ้งเตือน', 'กรุณาอนุญาต Pop-up (Allow Pop-ups) เพื่อพิมพ์เอกสาร', 'warning');
         printWindow.document.write('<html><body><h2 style="text-align:center;margin-top:20%;font-family:sans-serif;color:#555;">กำลังเตรียมเอกสาร...</h2></body></html>');
@@ -1356,7 +1362,7 @@ const app = {
         let finalPayMethod = this.data.payMethod;
         if (finalPayMethod === 'โอน (QR Code)') { if (!this.data.selectedBank) return Swal.fire('กรุณาเลือกบัญชี', 'โปรดเลือกบัญชีธนาคารที่รับเงิน', 'warning'); finalPayMethod = `โอน(${this.data.selectedBank})`; }
         
-        // สั่งเปิดหน้าต่างรอก่อนเลย ป้องกันบล็อก Pop-up
+        // --- สั่งเปิดหน้าต่างรอก่อนเลย ป้องกันบล็อก Pop-up ---
         const printWindow = window.open('', '_blank');
         if(!printWindow) return Swal.fire('แจ้งเตือน', 'กรุณาอนุญาต Pop-up (Allow Pop-ups) บนเบราว์เซอร์ เพื่อพิมพ์บิล', 'warning');
         printWindow.document.write('<html><body><h2 style="text-align:center;margin-top:20%;font-family:sans-serif;color:#555;">กำลังเตรียมเอกสารพิมพ์...</h2></body></html>');
@@ -1373,7 +1379,7 @@ const app = {
             const sub = document.getElementById('sum-subtotal').innerText; const dep = document.getElementById('sum-deposit').innerText; const disc = document.getElementById('inp-discount').value || '0'; const cartSnapshot = [...this.data.cart];
             lineShare.store({...payload, paymentMethod: finalPayMethod}, cartSnapshot, sub, dep, disc, total);
 
-            // ส่ง printWindow ไปให้ printA5 เขียนต่อ
+            // ส่งหน้าต่าง printWindow ไปให้ printA5 เขียนข้อมูลต่อ
             this.printA5({...payload, paymentMethod: finalPayMethod}, oldDebt, printWindow);
 
             Swal.fire({ 
@@ -1394,13 +1400,13 @@ const app = {
             });
             this.resetForm(); document.getElementById('line-share-btn').classList.remove('hidden'); 
         } else {
-            printWindow.close(); // ถ้าบันทึกไม่สำเร็จให้ปิดหน้าต่างพริ้นต์ทิ้ง
+            printWindow.close(); // ถ้าบันทึกไม่สำเร็จให้ปิด Pop-up ทิ้งไปเลย
         }
     },
 
     async uploadPdf(invId, base64) { api.post({ action: 'upload_pdf', fileName: `Receipt_${invId}.pdf`, fileData: base64, mimeType: 'application/pdf' }, true); },
 
-    // ฟังก์ชัน Print อัปเดตใหม่ ให้ตอบสนองรวดเร็ว และอัปไฟล์ลับๆ หลังบ้าน
+    // ฟังก์ชัน PrintA5 อัปเดตใหม่
     printA5(data, oldDebt, printWindow) {
         const [py, pm, pd] = data.date.split('-'); const formattedDate = new Date(py, pm - 1, pd).toLocaleDateString('th-TH');
         const subtotal = document.getElementById('sum-subtotal').innerText; const deposit = document.getElementById('sum-deposit').innerText; const discount = document.getElementById('inp-discount').value || '0.00'; const total = data.totalAmount.toLocaleString('th-TH');
@@ -1427,7 +1433,6 @@ const app = {
             document.getElementById('r-debt-old').innerText = oldDebtText; document.getElementById('r-debt-new').innerText = newDebtText;
         } else { debtSection.classList.add('hidden'); }
 
-        // --- จัดเตรียม HTML สำหรับ Print Popup ---
         const printerType = localStorage.getItem('pos_printer_type') || '107mm';
         let printContentHtml = '';
 
@@ -1443,7 +1448,7 @@ const app = {
         // เขียนคำสั่งปริ้นลงหน้าต่างที่เตรียมไว้
         this.printHtmlPopup(printWindow, printContentHtml);
 
-        // --- ส่วนที่ทำงานซ่อนหลังบ้าน: วาด A5 ส่งเข้า Drive (ไม่ให้ผู้ใช้รอ) ---
+        // --- ส่วนที่ 3: วาด A5 ส่งเข้า Drive (หลบไปทำด้านหลัง ไม่ให้รอกด Print) ---
         setTimeout(async () => {
             const el = document.getElementById('receipt-render-area'); el.parentElement.style.left = '0px'; 
             try { 
@@ -1503,7 +1508,7 @@ const app = {
             let matchBank = true;
             if(bankFilter) {
                 if(bankFilter === 'เงินสด') { if(!d.paymentMethod.includes('เงินสด')) matchBank = false; }
-                else if(bankFilter === 'รอชำระ') { if(!d.paymentMethod.includes('รอชำระ')) matchBank = false; }
+                else if(bankFilter === 'รอชำระ') { if(!(d.paymentMethod.includes('รอชำระ') || d.paymentMethod.includes('ชำระแล้ว') || d.paymentMethod.includes('ชำระครบแล้ว'))) matchBank = false; }
                 else { if(!d.paymentMethod.includes(`โอน(${bankFilter})`)) matchBank = false; }
             }
             return matchText && matchDate && matchBank;
@@ -1521,8 +1526,8 @@ const app = {
         Object.values(custGroups).forEach(group => {
             group.sort((a,b) => (a.date + a.time).localeCompare(b.date + b.time));
             let generalPool = 0;
-            // ตัดลอจิกชำระแล้ว (C) ออกให้หมดตามรีเควส
-            group.forEach(x => { if(x.note !== 'ชำระหนี้ค้าง' && x.paymentMethod.includes('รอชำระ')) { debtMap[x.invoiceId] = x.totalAmount; } });
+            // *** แก้ไขที่ 2: นับบิลเครดิตที่ใช้คำเก่าๆ เป็นหนี้ด้วย ***
+            group.forEach(x => { if(x.note !== 'ชำระหนี้ค้าง' && (x.paymentMethod.includes('รอชำระ') || x.paymentMethod.includes('ชำระแล้ว') || x.paymentMethod.includes('ชำระครบแล้ว'))) { debtMap[x.invoiceId] = x.totalAmount; } });
             group.forEach(x => {
                 if(x.note === 'ชำระหนี้ค้าง') {
                     let allocatedAmount = 0; const match = x.items.match(/\[(.*?)\]/);
@@ -1536,7 +1541,7 @@ const app = {
                 }
             });
             group.forEach(x => {
-                if(x.note !== 'ชำระหนี้ค้าง' && x.paymentMethod.includes('รอชำระ')) {
+                if(x.note !== 'ชำระหนี้ค้าง' && (x.paymentMethod.includes('รอชำระ') || x.paymentMethod.includes('ชำระแล้ว') || x.paymentMethod.includes('ชำระครบแล้ว'))) {
                     let remain = debtMap[x.invoiceId];
                     if (remain > 0.01 && generalPool > 0.01) { const deduct = Math.min(remain, generalPool); remain = Math.round((remain - deduct) * 100) / 100; generalPool = Math.round((generalPool - deduct) * 100) / 100; debtMap[x.invoiceId] = remain; }
                 }
@@ -1577,7 +1582,7 @@ const app = {
             if (!acc[date]) acc[date] = { date, total: 0, pending: 0, items: [] };
             if (curr.note !== 'ชำระหนี้ค้าง') { 
                 acc[date].total += curr.totalAmount; 
-                if(curr.paymentMethod.includes('รอชำระ')) { const remain = debtMap[curr.invoiceId]; if (remain !== undefined && remain > 0.01) { acc[date].pending += remain; } } 
+                if(curr.paymentMethod.includes('รอชำระ') || curr.paymentMethod.includes('ชำระแล้ว') || curr.paymentMethod.includes('ชำระครบแล้ว')) { const remain = debtMap[curr.invoiceId]; if (remain !== undefined && remain > 0.01) { acc[date].pending += remain; } } 
             }
             acc[date].items.push(curr); return acc;
         }, {});
@@ -1594,7 +1599,7 @@ const app = {
                 if(d.note === 'ชำระหนี้ค้าง') badgeClass = 'bg-purple-100 text-purple-700 border border-purple-200';
                 
                 let displayStatus = d.note === 'ชำระหนี้ค้าง' ? 'รับชำระหนี้' : d.paymentMethod;
-                if(d.paymentMethod.includes('รอชำระ')) {
+                if(d.paymentMethod.includes('รอชำระ') || d.paymentMethod.includes('ชำระแล้ว') || d.paymentMethod.includes('ชำระครบแล้ว')) {
                     const remain = debtMap[d.invoiceId];
                     if(remain !== undefined && remain > 0.01) { displayStatus = `<span class="block leading-tight mb-0.5">รอชำระ</span><span class="block text-red-600 font-bold">(${remain.toLocaleString('th-TH')})</span>`; badgeClass = 'bg-red-50 text-red-700 border border-red-200'; }
                     else if(remain !== undefined && remain <= 0.01) { displayStatus = `<span class="text-emerald-600 font-bold flex items-center gap-1 justify-center"><i class="fa-solid fa-check-circle"></i> ชำระครบแล้ว</span>`; badgeClass = 'bg-emerald-50 text-emerald-700 border border-emerald-100'; }
@@ -1635,7 +1640,7 @@ const app = {
             sorted.forEach(d => {
                 let status = d.paymentMethod; let amount = d.totalAmount; let isDebtPayment = d.note === 'ชำระหนี้ค้าง';
                 if (isDebtPayment) { status = '(จ่ายหนี้)'; } 
-                else if (d.paymentMethod.includes('รอชำระ')) { const debtInfo = debtMap[d.invoiceId]; if (debtInfo && debtInfo.remain > 0.01) status = `(ค้าง ${debtInfo.remain.toLocaleString('th-TH')})`; else status = '(จ่ายครบ)'; } 
+                else if (d.paymentMethod.includes('รอชำระ') || d.paymentMethod.includes('ชำระแล้ว') || d.paymentMethod.includes('ชำระครบแล้ว')) { const debtInfo = debtMap[d.invoiceId]; if (debtInfo && debtInfo.remain > 0.01) status = `(ค้าง ${debtInfo.remain.toLocaleString('th-TH')})`; else status = '(จ่ายครบ)'; } 
                 else if (status.includes('โอน')) { status = '(โอน)'; } else if (status.includes('เงินสด')) { status = '(สด)'; }
                 if(!isDebtPayment) totalSales += amount;
                 thermalRows += `<tr><td style="padding: 6px 0; border-bottom: 1px dotted #888;"><div style="font-weight: bold; font-size: 16px;">${d.time} | ${d.customerName}</div><div style="font-size: 14px; color: #555;">${d.invoiceId} ${status}</div></td><td style="padding: 6px 0; border-bottom: 1px dotted #888; text-align: right; font-size: 18px; font-weight: bold; vertical-align: top;">${amount.toLocaleString('th-TH')}</td></tr>`;
@@ -1646,7 +1651,7 @@ const app = {
             sorted.forEach(d => {
                 let status = d.paymentMethod; let amount = d.totalAmount; let isDebtPayment = d.note === 'ชำระหนี้ค้าง';
                 if (isDebtPayment) { status = 'รับชำระหนี้ (' + d.paymentMethod + ')'; } 
-                else if (d.paymentMethod.includes('รอชำระ')) { const debtInfo = debtMap[d.invoiceId]; if (debtInfo && debtInfo.remain > 0.01) status = `รอชำระ (ค้าง ${debtInfo.remain.toLocaleString('th-TH')} ฿)`; else status = 'ชำระครบแล้ว'; }
+                else if (d.paymentMethod.includes('รอชำระ') || d.paymentMethod.includes('ชำระแล้ว') || d.paymentMethod.includes('ชำระครบแล้ว')) { const debtInfo = debtMap[d.invoiceId]; if (debtInfo && debtInfo.remain > 0.01) status = `รอชำระ (ค้าง ${debtInfo.remain.toLocaleString('th-TH')} ฿)`; else status = 'ชำระครบแล้ว'; }
                 if(!isDebtPayment) totalSales += amount;
                 normalRows += `<tr><td style="border: 1px solid #374151; padding: 8px; text-align: center;">${index++}</td><td style="border: 1px solid #374151; padding: 8px; text-align: center;">${d.time}</td><td style="border: 1px solid #374151; padding: 8px; text-align: left;">${d.customerName}</td><td style="border: 1px solid #374151; padding: 8px; text-align: center;">${d.invoiceId}</td><td style="border: 1px solid #374151; padding: 8px; text-align: right;">${amount.toLocaleString('th-TH')}</td><td style="border: 1px solid #374151; padding: 8px; text-align: center;">${status}</td></tr>`;
             });
@@ -1701,7 +1706,8 @@ const app = {
         
         Object.values(custGroups).forEach(group => {
             group.sort((a,b) => (a.date + a.time).localeCompare(b.date + b.time)); let generalPool = 0;
-            group.forEach(x => { if(x.note !== 'ชำระหนี้ค้าง' && x.paymentMethod.includes('รอชำระ')) debtMap[x.invoiceId] = { name: x.customerName, remain: x.totalAmount, date: x.date }; });
+            // *** แก้ไขที่ 3: นับบิลเครดิตให้ครบ ***
+            group.forEach(x => { if(x.note !== 'ชำระหนี้ค้าง' && (x.paymentMethod.includes('รอชำระ') || x.paymentMethod.includes('ชำระแล้ว') || x.paymentMethod.includes('ชำระครบแล้ว'))) debtMap[x.invoiceId] = { name: x.customerName, remain: x.totalAmount, date: x.date }; });
             group.forEach(x => {
                 if(x.note === 'ชำระหนี้ค้าง') {
                     let allocatedAmount = 0; const match = x.items.match(/\[(.*?)\]/);
@@ -1709,7 +1715,7 @@ const app = {
                     generalPool += (x.totalAmount - allocatedAmount); generalPool = Math.round(generalPool * 100) / 100;
                 }
             });
-            group.forEach(x => { if(x.note !== 'ชำระหนี้ค้าง' && x.paymentMethod.includes('รอชำระ')) { if (debtMap[x.invoiceId] && debtMap[x.invoiceId].remain > 0.01 && generalPool > 0.01) { const deduct = Math.min(debtMap[x.invoiceId].remain, generalPool); debtMap[x.invoiceId].remain = Math.round((debtMap[x.invoiceId].remain - deduct) * 100) / 100; generalPool = Math.round((generalPool - deduct) * 100) / 100; } } });
+            group.forEach(x => { if(x.note !== 'ชำระหนี้ค้าง' && (x.paymentMethod.includes('รอชำระ') || x.paymentMethod.includes('ชำระแล้ว') || x.paymentMethod.includes('ชำระครบแล้ว'))) { if (debtMap[x.invoiceId] && debtMap[x.invoiceId].remain > 0.01 && generalPool > 0.01) { const deduct = Math.min(debtMap[x.invoiceId].remain, generalPool); debtMap[x.invoiceId].remain = Math.round((debtMap[x.invoiceId].remain - deduct) * 100) / 100; generalPool = Math.round((generalPool - deduct) * 100) / 100; } } });
         });
         return debtMap;
     },
@@ -1732,7 +1738,8 @@ const app = {
                 if(!custStats[d.customerName]) custStats[d.customerName] = { rev: 0, vol: 0, cashAmt: 0, creditAmt: 0 };
                 custStats[d.customerName].rev += d.totalAmount; custStats[d.customerName].vol += currentVol;
                 if (d.paymentMethod.includes('เงินสด') || d.paymentMethod.includes('โอน')) custStats[d.customerName].cashAmt += d.totalAmount;
-                if (d.paymentMethod.includes('รอชำระ')) custStats[d.customerName].creditAmt += d.totalAmount;
+                // *** แก้ไขที่ 4: นับบิลเครดิตที่ใช้คำเก่าๆ เป็นหนี้ด้วย ***
+                if (d.paymentMethod.includes('รอชำระ') || d.paymentMethod.includes('ชำระแล้ว') || d.paymentMethod.includes('ชำระครบแล้ว')) custStats[d.customerName].creditAmt += d.totalAmount;
             }
         });
         if(minPrice === Infinity) { minPrice = 0; maxPrice = 0; }
@@ -1777,7 +1784,10 @@ const app = {
             const name = d.customerName || 'ไม่ระบุชื่อ';
             if (!custHistory[name]) { custHistory[name] = { name: name, rev: 0, vol: 0, cash: 0, transfer: 0, credit: 0, other: 0 }; }
             const c = custHistory[name]; c.rev += d.totalAmount; c.vol += this.extractVolume(d.items);
-            if (d.paymentMethod.includes('โอน')) c.transfer += d.totalAmount; else if (d.paymentMethod.includes('เงินสด')) c.cash += d.totalAmount; else if (d.paymentMethod.includes('รอชำระ')) c.credit += d.totalAmount; else c.other += d.totalAmount; 
+            if (d.paymentMethod.includes('โอน')) c.transfer += d.totalAmount; 
+            else if (d.paymentMethod.includes('เงินสด')) c.cash += d.totalAmount; 
+            else if (d.paymentMethod.includes('รอชำระ') || d.paymentMethod.includes('ชำระแล้ว') || d.paymentMethod.includes('ชำระครบแล้ว')) c.credit += d.totalAmount; 
+            else c.other += d.totalAmount; 
         });
 
         const topCustomers = Object.values(custHistory).sort((a, b) => b.rev - a.rev).slice(0, 10);
@@ -1800,7 +1810,13 @@ const app = {
         let payCash = 0, payTransfer = 0, payCredit = 0;
         cur.filtered.forEach(d => {
             if(d.note === 'ชำระหนี้ค้าง') { if(d.paymentMethod.includes('เงินสด')) payCash += d.totalAmount; else if(d.paymentMethod.includes('โอน')) payTransfer += d.totalAmount; } 
-            else { if(d.paymentMethod.includes('เงินสด')) payCash += d.totalAmount; else if(d.paymentMethod.includes('โอน')) payTransfer += d.totalAmount; else if(d.paymentMethod.includes('รอชำระ')) { const remain = debtMap[d.invoiceId] ? debtMap[d.invoiceId].remain : 0; payCredit += remain; } }
+            else { 
+                if(d.paymentMethod.includes('เงินสด')) payCash += d.totalAmount; 
+                else if(d.paymentMethod.includes('โอน')) payTransfer += d.totalAmount; 
+                else if(d.paymentMethod.includes('รอชำระ') || d.paymentMethod.includes('ชำระแล้ว') || d.paymentMethod.includes('ชำระครบแล้ว')) { 
+                    const remain = debtMap[d.invoiceId] ? debtMap[d.invoiceId].remain : 0; payCredit += remain; 
+                } 
+            }
         });
 
         const bankStats = {};
